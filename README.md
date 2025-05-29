@@ -143,3 +143,5 @@ bash
 Copiar
 Editar
 ip link show enp3s0f0
+
+ip a show br0
