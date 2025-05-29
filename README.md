@@ -132,3 +132,14 @@ Copiar
 Editar
 sudo nmcli con delete br0
 sudo nmcli con delete br0-port1
+
+
+
+sudo nmcli connection down br0
+sudo nmcli connection up br0
+🔁 Verifica el estado físico de enp3s0f0:
+
+bash
+Copiar
+Editar
+ip link show enp3s0f0
