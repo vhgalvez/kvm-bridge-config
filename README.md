@@ -1,147 +1,66 @@
-# 🔧 KVM Bridge Setup Script para Rocky/AlmaLinux
+# 🔧 KVM Bridge Setup Scripts (DHCP) para Rocky/AlmaLinux
 
-Este repositorio contiene un script automatizado para configurar un puente de red (`br0`) en una máquina con **Rocky Linux 9.x** o **AlmaLinux 9.x**, ideal para entornos con **KVM/libvirt** donde las máquinas virtuales necesitan acceso directo a la red LAN (modo bridge).
+Este repositorio contiene dos scripts automatizados para configurar y eliminar un bridge de red llamado `br0`, útil en entornos con KVM/libvirt cuando se requiere conectividad LAN directa para las máquinas virtuales (modo bridge).
 
 ---
 
 ## 🖥️ Características
 
-- Crea una interfaz bridge (`br0`).
-- Puede configurarse en modo **IP estática** o **DHCP**.
-- Conecta una interfaz física (`enp3s0f0`) como esclava del bridge.
-- Configuración persistente con **NetworkManager**.
-- Instalación automática de paquetes necesarios (`bridge-utils`, `NetworkManager`).
-- Verificación automática de estado.
+* ✅ Crea un bridge persistente llamado `br0`.
+* ✅ Asigna IP mediante DHCP.
+* ✅ Añade una interfaz física como esclava (por defecto: `enp3s0f0`).
+* ✅ Compatible con `NetworkManager`.
+* ✅ Completamente reversible mediante script de limpieza.
 
 ---
 
 ## ⚙️ Requisitos
 
-- Sistema operativo: **Rocky Linux / AlmaLinux 9.x**.
-- Acceso con **sudo**.
-- Interfaz de red física libre: `enp3s0f0` *(ajustar si es diferente)*.
+* Rocky Linux / AlmaLinux / RHEL 9+.
+* Permisos de `sudo` o acceso root.
+* Una interfaz física disponible (verificable con `ip link`).
+* Red local con servidor DHCP activo.
 
 ---
 
-## 🚀 Ejecución rápida (modo DHCP)
+## 🚀 Ejecución rápida
+
+### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/vhgalvez/kvm-bridge-config.git
+git clone https://github.com/tu-usuario/kvm-bridge-config.git
 cd kvm-bridge-config
-sudo bash bridge-setup-dhcp.sh
-O para modo IP estática (editar dentro del script):
+```
 
-bash
-Copiar
-Editar
-sudo bash bridge-setup-static.sh
-🧪 Resultado esperado
-Al finalizar, tendrás:
+### 2. Dar permisos de ejecución
 
-Una interfaz br0 activa y persistente.
+```bash
+chmod +x bridge-setup.sh bridge-cleanup.sh
+```
 
-Tu interfaz física enp3s0f0 conectada al bridge.
+### 3. Ejecutar el script de configuración
 
-Máquinas virtuales configuradas con red tipo bridge accediendo a la LAN real.
+```bash
+sudo ./bridge-setup.sh
+```
 
-Puedes verificarlo con:
+### 4. Para revertir la configuración
 
-bash
-Copiar
-Editar
-ip a show br0
-nmcli connection show
-📝 Comandos manuales equivalentes (DHCP)
-bash
-Copiar
-Editar
-sudo dnf install -y bridge-utils NetworkManager
-sudo nmcli connection add type bridge autoconnect yes con-name br0 ifname br0
-sudo nmcli connection modify br0 ipv4.method auto ipv6.method ignore
-sudo nmcli connection add type ethernet slave-type bridge \
-  con-name br0-port1 ifname enp3s0f0 master br0
-sudo nmcli connection up br0
-📂 Configuración persistente manual (NetworkManager)
-/etc/NetworkManager/system-connections/br0.nmconnection (modo estático)
-ini
-Copiar
-Editar
-[connection]
-id=br0
-type=bridge
-interface-name=br0
-autoconnect=true
+```bash
+sudo ./bridge-cleanup.sh
+sudo systemctl restart NetworkManager
+```
 
-[bridge]
-stp=false
+---
 
-[ipv4]
-method=manual
-address1=192.168.0.20/24,192.168.0.1
-dns=192.168.0.1;8.8.8.8
+## 📍 Notas adicionales
 
-[ipv6]
-method=ignore
-/etc/NetworkManager/system-connections/enp3s0f0.nmconnection
-ini
-Copiar
-Editar
-[connection]
-id=enp3s0f0
-type=ethernet
-interface-name=enp3s0f0
-master=br0
-slave-type=bridge
-autoconnect=true
+* Verifica tus interfaces con `ip link` o `nmcli device status`.
+* Puedes cambiar la interfaz física modificando la variable `PHYS_IFACE` en el script `bridge-setup.sh`.
+* Este tipo de bridge permite que tus VMs se comporten como si estuvieran directamente conectadas a la red física, ideal para pruebas de laboratorio, Kubernetes bare-metal, etc.
 
-[ipv4]
-method=disabled
+---
 
-[ipv6]
-method=ignore
-🔄 Eliminación del bridge
-Si deseas eliminar el bridge:
+## 📜 Licencia
 
-bash
-Copiar
-Editar
-sudo nmcli connection delete br0
-sudo nmcli connection delete br0-port1
-🧠 Notas importantes
-Si tu interfaz física no se llama enp3s0f0, reemplaza el nombre en el script.
-
-Asegúrate de que tu red local tenga un servidor DHCP activo si eliges modo dinámico.
-
-Este puente es perfecto para máquinas virtuales KVM, clústeres Kubernetes, o entornos de laboratorio con comunicación LAN directa.
-
-📜 Licencia
-MIT License — Libre para usar, modificar y distribuir.
-
-🧠 Verificación posterior (opcional)
-Después de reiniciar, puedes verificar:
-
-bash
-Copiar
-Editar
-nmcli con show
-ip a show br0
-Y si necesitas eliminarlo en el futuro:
-
-bash
-Copiar
-Editar
-sudo nmcli con delete br0
-sudo nmcli con delete br0-port1
-
-
-
-sudo nmcli connection down br0
-sudo nmcli connection up br0
-🔁 Verifica el estado físico de enp3s0f0:
-
-bash
-Copiar
-Editar
-ip link show enp3s0f0
-
-ip a show br0
+MIT — Libre para usar, modificar y distribuir.

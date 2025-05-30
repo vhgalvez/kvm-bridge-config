@@ -1,30 +1,41 @@
 #!/bin/bash
-# bridge-setup-dhcp.sh - Configura br0 con DHCP persistente en Rocky/AlmaLinux
+# bridge-setup-dhcp.sh - Configura un bridge br0 con DHCP persistente
+# Compatible con Rocky Linux, AlmaLinux, RHEL 9+
 
-set -e
+set -euo pipefail
 
-echo "[+] Instalando bridge-utils y NetworkManager..."
-sudo dnf install -y bridge-utils NetworkManager
+# =================== Configuración ===================
+BRIDGE_NAME="br0"
+SLAVE_NAME="br0-port1"
+PHYS_IFACE="enp3s0f0"
+# =====================================================
 
-echo "[+] Creando el bridge br0 en modo DHCP..."
-sudo nmcli connection add type bridge autoconnect yes con-name br0 ifname br0
+echo "[+] Verificando permisos..."
+if [[ "$EUID" -ne 0 ]]; then
+  echo "[-] Este script debe ejecutarse como root o con sudo." >&2
+  exit 1
+fi
 
-sudo nmcli connection modify br0 \
-  ipv4.method auto \
-  ipv6.method ignore
+echo "[+] Instalando bridge-utils y NetworkManager (si faltan)..."
+dnf install -y bridge-utils NetworkManager &>/dev/null
 
-# ⚠️ Ajusta si tu interfaz física no es enp3s0f0
-echo "[+] Agregando enp3s0f0 como esclavo de br0..."
-sudo nmcli connection add type ethernet slave-type bridge \
-  con-name br0-port1 ifname enp3s0f0 master br0
+echo "[+] Eliminando conexiones anteriores del script (si existen)..."
+nmcli connection delete "$BRIDGE_NAME" &>/dev/null || true
+nmcli connection delete "$SLAVE_NAME" &>/dev/null || true
 
-echo "[+] Activando br0..."
-sudo nmcli connection reload
-sudo nmcli connection up br0
+echo "[+] Creando el bridge $BRIDGE_NAME..."
+nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" autoconnect yes
+nmcli connection modify "$BRIDGE_NAME" ipv4.method auto ipv6.method ignore
 
-echo "[+] Estado actual de br0:"
-ip a show br0
+echo "[+] Agregando $PHYS_IFACE como esclavo del bridge..."
+nmcli connection add type ethernet con-name "$SLAVE_NAME" ifname "$PHYS_IFACE" master "$BRIDGE_NAME" slave-type bridge
 
-echo "[✔] Bridge br0 en modo DHCP configurado correctamente y persistente tras reinicio."
-exit 0
-# Fin del script bridge-setup-dhcp.sh
+echo "[+] Activando bridge y esclavo..."
+nmcli connection up "$BRIDGE_NAME"
+nmcli connection up "$SLAVE_NAME"
+
+echo "[+] Estado final del bridge:"
+ip a show "$BRIDGE_NAME"
+nmcli device status | grep "$BRIDGE_NAME"
+
+echo "[✔] Bridge $BRIDGE_NAME activo, con DHCP y persistente tras reinicio."
