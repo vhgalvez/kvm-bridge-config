@@ -1,4 +1,5 @@
 #!/bin/bash
+# network-setup-bridge.sh
 # 🌉 Crea un bridge br0 sin IP y le añade una interfaz física como esclava
 
 set -euo pipefail

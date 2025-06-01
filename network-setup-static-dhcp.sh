@@ -1,5 +1,5 @@
 #!/bin/bash
-# config-network.sh - Configura las interfaces físicas con una IP fija y dos con DHCP.
+# network-setup-static-dhcp.sh - Configura las interfaces físicas con una IP fija y dos con DHCP.
 # Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
 # 🛠️ Configura 1 interfaz con IP fija y otras 2 con DHCP
 
