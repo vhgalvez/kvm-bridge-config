@@ -16,25 +16,42 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
+# =================== Funciones ===================
+
+# Función para eliminar conexiones de red
+delete_connection() {
+  local conn_name=$1
+  echo "[+] Eliminando conexión: $conn_name..."
+  nmcli connection delete "$conn_name" &>/dev/null || true
+}
+
+# Función para desactivar y desconectar interfaces
+disable_interface() {
+  local iface=$1
+  echo "[+] Desactivando la interfaz: $iface..."
+  nmcli device disconnect "$iface" &>/dev/null || true
+  nmcli device modify "$iface" autoconnect no &>/dev/null || true
+}
+
+# =================== Limpieza de Configuración de Red ===================
+
 echo "[+] Limpiando conexiones NetworkManager preexistentes para evitar conflictos..."
 
 # Eliminar conexiones existentes para el puente y sus interfaces físicas asociadas
-nmcli connection delete "$BRIDGE_NAME" &>/dev/null || true
-nmcli connection delete "${PRIMARY_PHYS_IFACE}-slave" &>/dev/null || true # Eliminar el perfil esclavo si existe
+delete_connection "$BRIDGE_NAME"
+delete_connection "${PRIMARY_PHYS_IFACE}-slave"  # Eliminar el perfil esclavo si existe
 
 # Desactivar y eliminar conexiones para otras interfaces físicas
 for iface in "${OTHER_PHYS_IFACES[@]}"; do
-  echo "[+] Desactivando y eliminando conexión para la interfaz $iface..."
-  # Eliminar la conexión si existe (usa el nombre del dispositivo como nombre de conexión por defecto)
-  nmcli connection delete "$iface" &>/dev/null || true
-  # Asegurarse de que el dispositivo esté abajo y no se levante automáticamente
-  nmcli device disconnect "$iface" &>/dev/null || true
-  nmcli device modify "$iface" autoconnect no &>/dev/null || true
+  disable_interface "$iface"
+  delete_connection "$iface"
 done
 
 # Limpiar cualquier conexión residual
 echo "[+] Limpiando cualquier conexión residual..."
 nmcli connection reload
+
+# =================== Verificación Final ===================
 
 echo "[+] Verificando el estado de las interfaces..."
 nmcli device status
