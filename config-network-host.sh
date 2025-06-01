@@ -1,5 +1,5 @@
 #!/bin/bash
-# config-network-host.sh - Configura el puente de red (br0) con DHCP para recibir IP de la máquina virtual (MV)
+# config-network-host.sh - Configura el puente de red `br0` con DHCP para recibir IP de la máquina virtual (MV)
 # Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
 # Este script configura el puente `br0` para permitir que las máquinas virtuales obtengan su IP, mientras que el host mantiene el control de las interfaces físicas.
 

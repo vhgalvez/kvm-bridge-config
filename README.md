@@ -88,6 +88,14 @@ sudo brctl show br0
 # (Opcional) Confirmar que NetworkManager tiene las conexiones activas
 nmcli connection show
 
+resource "libvirt_network" "br0" {
+  name      = var.so_network_name
+  mode      = "bridge"
+  bridge    = "br0"
+  autostart = true
+  addresses = ["192.168.0.0/24"]
+}
+
 
 
 resource "libvirt_domain" "vm" {
