@@ -1,5 +1,6 @@
 #!/bin/bash
-# network-setup-bridge.sh - Crea un puente (br0) sin IP y le añade una interfaz física como esclava
+# network-setup-bridge.sh
+# 🌉 Crea un bridge br0 sin IP y le añade una interfaz física como esclava
 
 set -euo pipefail
 
@@ -13,7 +14,7 @@ delete_existing_connection() {
     existing=$(nmcli -t -f NAME,DEVICE connection show --active | grep "$iface" || true)
     if [[ -n "$existing" ]]; then
         echo "⚠️ Eliminando conexión anterior en $iface..."
-        nmcli connection delete "$iface" || true
+        nmcli connection delete "${iface}" || true
     fi
 }
 
@@ -27,6 +28,6 @@ nmcli connection add type bridge ifname "$BRIDGE_NAME" con-name "$BRIDGE_NAME" \
 
 echo "🔗 Añadiendo interfaz esclava $IF_BRIDGE_SLAVE al bridge..."
 nmcli connection add type ethernet ifname "$IF_BRIDGE_SLAVE" con-name "${IF_BRIDGE_SLAVE}-br" \
-  master "$BRIDGE_NAME" ipv4.method disabled ipv6.method ignore autoconnect yes
+  master "$BRIDGE_NAME" autoconnect yes
 
 echo "✅ Bridge $BRIDGE_NAME con esclava $IF_BRIDGE_SLAVE configurado."
