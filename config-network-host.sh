@@ -11,7 +11,7 @@ PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración con IP fij
 
 # Configuración IP para el HOST (a través de br0)
 HOST_IP_METHOD="auto"         # "manual" para IP estática, "auto" para DHCP en br0
-HOST_IP_ADDRESS="192.168.0.15/24" # IP fija para la interfaz administrativa (enp3s0f0)
+HOST_IP_ADDRESS="192.168.0.40/24" # IP fija para la interfaz administrativa (enp3s0f0)
 HOST_GATEWAY="192.168.0.1"    # Gateway para el host
 HOST_DNS="8.8.8.8,1.1.1.1"    # Servidores DNS para el host
 
