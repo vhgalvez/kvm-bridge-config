@@ -1,14 +1,13 @@
 #!/bin/bash
-# config-network-host.sh - Configura el puente de red y las interfaces físicas con DHCP y IP fija.
+# config-network-host.sh - Configura el puente de red `br0` con DHCP para recibir IP de la máquina virtual (MV)
 # Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
-# Este script establece el puente `br0` con DHCP y asigna IP estática a una interfaz específica (`enp3s0f0`), mientras que otras interfaces reciben IP por DHCP.
+# Este script configura el puente `br0` para permitir que las máquinas virtuales obtengan su IP, mientras que el host mantiene el control de las interfaces físicas.
 
 set -euo pipefail
 
 # =================== Configuración ===================
 BRIDGE_NAME="br0"             # Nombre del puente
-PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración con IP fija
-FIXED_IP="192.168.0.40/24"    # IP fija para la interfaz enp3s0f0
+PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración
 HOST_GATEWAY="192.168.0.1"    # Gateway para el host
 HOST_DNS="8.8.8.8,1.1.1.1,10.17.3.11"    # Servidores DNS para el host
 
@@ -44,7 +43,7 @@ done
 
 # =================== Configuración del Puente ===================
 echo "[+] Creando y configurando el puente $BRIDGE_NAME..."
-# Configuración del puente con DHCP
+# Configuración del puente con DHCP para que la MV obtenga su IP
 nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" \
     ipv4.method auto \
     ipv4.gateway "$HOST_GATEWAY" \
@@ -56,13 +55,13 @@ echo "[+] Activando el puente $BRIDGE_NAME para obtener IP por DHCP..."
 nmcli connection up "$BRIDGE_NAME" || { echo "[-] Falló la activación del puente $BRIDGE_NAME. Abortando." >&2; exit 1; }
 
 # =================== Configuración de la interfaz con IP fija ===================
-echo "[+] Configurando $PRIMARY_PHYS_IFACE con IP fija $FIXED_IP..."
+echo "[+] Configurando $PRIMARY_PHYS_IFACE para actuar como esclavo del puente $BRIDGE_NAME..."
 nmcli connection add type ethernet con-name "${PRIMARY_PHYS_IFACE}-slave" ifname "$PRIMARY_PHYS_IFACE" \
-  master "$BRIDGE_NAME" ipv4.method manual ipv4.addresses "$FIXED_IP" \
+  master "$BRIDGE_NAME" ipv4.method disabled \
   autoconnect yes
 
-# Activar la interfaz con IP fija
-nmcli connection up "${PRIMARY_PHYS_IFACE}-slave" || { echo "[-] Falló la activación de la interfaz con IP fija. Abortando." >&2; exit 1; }
+# Activar la interfaz esclava
+nmcli connection up "${PRIMARY_PHYS_IFACE}-slave" || { echo "[-] Falló la activación de la interfaz esclava $PRIMARY_PHYS_IFACE. Abortando." >&2; exit 1; }
 
 # =================== Configuración de otras interfaces con DHCP ===================
 for iface in "${OTHER_PHYS_IFACES[@]}"; do
@@ -85,4 +84,4 @@ ip a show "$BRIDGE_NAME"
 echo "[+] Rutas actuales del host:"
 ip route show
 
-echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal con IP $FIXED_IP."
+echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal para las máquinas virtuales con DHCP."
