@@ -13,7 +13,7 @@ PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración con IP fij
 HOST_IP_METHOD="auto"         # "manual" para IP estática, "auto" para DHCP en br0
 HOST_IP_ADDRESS="192.168.0.40/24" # IP fija para la interfaz administrativa (enp3s0f0)
 HOST_GATEWAY="192.168.0.1"    # Gateway para el host
-HOST_DNS="8.8.8.8,1.1.1.1"    # Servidores DNS para el host
+HOST_DNS="8.8.8.8,1.1.1.1,10.17.3.11"    # Servidores DNS para el host
 
 # Otras interfaces físicas que se configurarán para usar DHCP
 OTHER_PHYS_IFACES=("enp3s0f1" "enp4s0f0" "enp4s0f1")
@@ -81,4 +81,4 @@ echo "[+] Rutas actuales del host:"
 ip route show
 
 echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal con IP $HOST_IP_ADDRESS (o DHCP)."
-echo "[!] Si la IP 192.168.0.15 ya estaba en uso en la red, podría haber un conflicto."
+echo "[!] Si la IP 192.168.0.40 ya estaba en uso en la red, podría haber un conflicto."
