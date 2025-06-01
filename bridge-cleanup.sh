@@ -1,6 +1,7 @@
 #!/bin/bash
 # cleanup-all.sh - Elimina todas las configuraciones de red relacionadas con el puente y las interfaces físicas.
 # Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
+# Este script elimina todas las configuraciones de red y prepara el entorno para la configuración posterior con config-network-host.sh
 
 set -euo pipefail
 
@@ -57,3 +58,4 @@ echo "[+] Verificando el estado de las interfaces..."
 nmcli device status
 
 echo "[✔] Limpieza completa realizada. Las configuraciones de red han sido eliminadas."
+echo "[!] Ahora puede proceder a ejecutar el script 'config-network-host.sh' para configurar la red."
