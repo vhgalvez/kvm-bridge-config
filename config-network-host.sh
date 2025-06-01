@@ -1,16 +1,23 @@
 #!/bin/bash
-# config-network-host.sh - Configura el puente de red y las interfaces físicas con DHCP y IP fija.
-# Compatible con Rocky Linux 9+
+# config-network-host-corrected.sh - Configura el puente de red y las interfaces físicas.
+# Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
+# Este script establece br0 como la interfaz principal del host con IP estática,
+# y desactiva otras interfaces físicas para evitar conflictos.
 
 set -euo pipefail
 
 # =================== Configuración ===================
-BRIDGE_NAME="br0"           # Nombre del puente
-PHYS_IFACE="enp3s0f0"       # Interfaz física asociada al puente
-INTERFACES=("enp3s0f1" "enp4s0f0" "enp4s0f1")  # Interfaces físicas que usarán DHCP en el host
-ADMIN_IFACE="enp3s0f0"      # Interfaz para acceso administrativo con IP estática
-ADMIN_IP="192.168.0.15"     # IP fija para la interfaz administrativa
-ADMIN_GATEWAY="192.168.0.1" # Gateway para la IP estática
+BRIDGE_NAME="br0"             # Nombre del puente
+PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física que será esclava de br0 (conectada a tu LAN)
+
+# Configuración IP para el HOST (a través de br0)
+HOST_IP_METHOD="manual"      # "manual" para IP estática, "auto" para DHCP
+HOST_IP_ADDRESS="192.168.0.15/24" # IP del host en br0
+HOST_GATEWAY="192.168.0.1"   # Gateway para el host
+HOST_DNS="8.8.8.8,1.1.1.1"   # Servidores DNS para el host
+
+# Otras interfaces físicas que se DESACTIVARÁN para evitar conflictos
+OTHER_PHYS_IFACES=("enp3s0f1" "enp4s0f0" "enp4s0f1")
 # =====================================================
 
 echo "[+] Verificando permisos..."
@@ -19,65 +26,53 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-echo "[+] Configurando las interfaces físicas para usar DHCP..."
+echo "[+] Instalando bridge-utils y NetworkManager (si faltan)..."
+dnf install -y bridge-utils NetworkManager -q || { echo "[-] Falló la instalación de paquetes. Abortando." >&2; exit 1; }
 
-# Configuración de interfaces con DHCP
-for iface in "${INTERFACES[@]}"; do
-  echo "[+] Configurando $iface para usar DHCP..."
+echo "[+] Limpiando conexiones NetworkManager preexistentes para evitar conflictos..."
+# Eliminar cualquier conexión existente para el bridge
+nmcli connection delete "$BRIDGE_NAME" &>/dev/null || true
+# Eliminar cualquier conexión existente para la interfaz física principal
+nmcli connection delete "$PRIMARY_PHYS_IFACE" &>/dev/null || true
 
-  # Eliminar la conexión actual si existe
-  ACTIVE_CONN=$(nmcli -t -f NAME,DEVICE connection show | grep "$iface" | cut -d: -f1)
-
-  if [[ -n "$ACTIVE_CONN" ]]; then
-    # Modificar la conexión existente para usar DHCP
-    echo "[+] Modificando la conexión existente $ACTIVE_CONN..."
-    nmcli connection modify "$ACTIVE_CONN" ipv4.method auto ipv6.method ignore
-  else
-    # Crear una nueva conexión para usar DHCP
-    echo "[+] Creando una nueva conexión para $iface..."
-    nmcli connection add type ethernet con-name "$iface" ifname "$iface" ipv4.method auto ipv6.method ignore
-  fi
-
-  # Activar la interfaz
-  nmcli connection up "$iface"
+# Eliminar y desactivar conexiones para otras interfaces físicas
+for iface in "${OTHER_PHYS_IFACES[@]}"; do
+  echo "[+] Desactivando y eliminando conexión para la interfaz $iface..."
+  nmcli connection delete "$iface" &>/dev/null || true # Elimina cualquier conexión con el mismo nombre
+  nmcli device disconnect "$iface" &>/dev/null || true # Asegura que la interfaz esté abajo
+  nmcli device modify "$iface" autoconnect no &>/dev/null || true # Evita que se levante automáticamente
 done
 
-# =================== Crear y configurar el puente ===================
-echo "[+] Instalando bridge-utils y NetworkManager (si faltan)..."
-dnf install -y bridge-utils NetworkManager &>/dev/null
-
-echo "[+] Eliminando conexiones previas del puente (si existen)..."
-nmcli connection delete "$BRIDGE_NAME" &>/dev/null || true
-nmcli connection delete "$PHYS_IFACE" &>/dev/null || true
-
 echo "[+] Creando el puente $BRIDGE_NAME..."
-nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" autoconnect yes ipv4.method auto ipv6.method ignore
+nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" autoconnect yes
 
-echo "[+] Configurando $PHYS_IFACE como parte del puente $BRIDGE_NAME..."
-nmcli connection add type ethernet con-name "$PHYS_IFACE" ifname "$PHYS_IFACE" master "$BRIDGE_NAME" slave-type bridge
-
-# Activar el puente y las interfaces físicas asociadas
-echo "[+] Activando el puente $BRIDGE_NAME y las interfaces físicas..."
-nmcli connection up "$BRIDGE_NAME"
-nmcli connection up "$PHYS_IFACE"
-
-# =================== Configuración de la interfaz administrativa con IP fija ===================
-echo "[+] Configurando $ADMIN_IFACE con IP fija $ADMIN_IP..."
-
-# Verificar si la conexión para la interfaz administrativa existe
-ACTIVE_CONN_ADMIN=$(nmcli -t -f NAME,DEVICE connection show | grep "$ADMIN_IFACE" | cut -d: -f1)
-
-if [[ -n "$ACTIVE_CONN_ADMIN" ]]; then
-  # Modificar la conexión existente para configurar una IP estática
-  echo "[+] Modificando la conexión $ACTIVE_CONN_ADMIN para usar IP estática..."
-  nmcli connection modify "$ACTIVE_CONN_ADMIN" ipv4.method manual ipv4.addresses "$ADMIN_IP/24" ipv4.gateway "$ADMIN_GATEWAY" ipv6.method ignore
-else
-  # Crear una nueva conexión para la interfaz administrativa con IP estática
-  echo "[+] Creando una nueva conexión para $ADMIN_IFACE con IP estática $ADMIN_IP..."
-  nmcli connection add type ethernet con-name "$ADMIN_IFACE" ifname "$ADMIN_IFACE" ipv4.method manual ipv4.addresses "$ADMIN_IP/24" ipv4.gateway "$ADMIN_GATEWAY" ipv6.method ignore
+# Configurar IP, Gateway y DNS en el puente
+nmcli connection modify "$BRIDGE_NAME" ipv4.method "$HOST_IP_METHOD" ipv6.method ignore
+if [[ "$HOST_IP_METHOD" == "manual" ]]; then
+  nmcli connection modify "$BRIDGE_NAME" ipv4.addresses "$HOST_IP_ADDRESS"
+  nmcli connection modify "$BRIDGE_NAME" ipv4.gateway "$HOST_GATEWAY"
 fi
+nmcli connection modify "$BRIDGE_NAME" ipv4.dns "$HOST_DNS"
 
-# Activar la interfaz administrativa
-nmcli connection up "$ADMIN_IFACE"
+echo "[+] Configurando $PRIMARY_PHYS_IFACE como esclava del puente $BRIDGE_NAME..."
+# Asegúrate de que la interfaz física esté abajo antes de añadirla al bridge
+nmcli device disconnect "$PRIMARY_PHYS_IFACE" &>/dev/null || true
+nmcli connection add type ethernet con-name "${PRIMARY_PHYS_IFACE}-slave" ifname "$PRIMARY_PHYS_IFACE" master "$BRIDGE_NAME" slave-type bridge autoconnect yes
 
-echo "[✔] El puente $BRIDGE_NAME está configurado con éxito, y las interfaces físicas están configuradas con DHCP. La interfaz administrativa tiene IP fija $ADMIN_IP."
+# Activar el puente y la interfaz esclava
+echo "[+] Activando el puente $BRIDGE_NAME y sus interfaces..."
+nmcli connection up "$BRIDGE_NAME" || { echo "[-] Falló la activación del puente. Abortando." >&2; exit 1; }
+nmcli connection up "${PRIMARY_PHYS_IFACE}-slave" || { echo "[-] Falló la activación de la interfaz esclava. Abortando." >&2; exit 1; }
+
+
+echo "[+] Verificando estado final de las interfaces:"
+nmcli device status
+
+echo "[+] Estado de IP del puente $BRIDGE_NAME:"
+ip a show "$BRIDGE_NAME"
+
+echo "[+] Rutas actuales del host:"
+ip route show
+
+echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal con IP $HOST_IP_ADDRESS (o DHCP)."
+echo "[!] Si la IP 192.168.0.15 ya estaba en uso, podría haber un conflicto."
