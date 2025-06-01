@@ -64,3 +64,41 @@ sudo systemctl restart NetworkManager
 ## 📜 Licencia
 
 MIT — Libre para usar, modificar y distribuir.
+
+
+
+sudo nmcli connection add type bridge con-name br0 ifname br0 autoconnect yes ipv4.method auto ipv6.method ignore
+sudo nmcli connection add type ethernet con-name br0-port-enp3s0f0 ifname enp3s0f0 master br0
+sudo nmcli connection up br0
+sudo nmcli connection up br0-port-enp3s0f0
+
+
+ip a show br0
+sudo brctl show br0
+nmcli connection show
+
+
+
+# Mostrar interfaces y sus IPs (asegurarse que br0 no tiene IP IPv4)
+ip a show br0
+
+# Mostrar interfaces esclavas del bridge
+sudo brctl show br0
+
+# (Opcional) Confirmar que NetworkManager tiene las conexiones activas
+nmcli connection show
+
+
+
+resource "libvirt_domain" "vm" {
+  for_each = var.vm_linux_definitions
+
+  name   = each.value.hostname
+  memory = each.value.memory
+  vcpu   = each.value.cpus
+
+  network_interface {
+    #network_id = libvirt_network.br0.id
+    bridge     = "br0"
+    addresses  = [each.value.ip]
+  }
