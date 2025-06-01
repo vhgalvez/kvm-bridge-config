@@ -7,11 +7,8 @@ set -euo pipefail
 
 # =================== Configuración ===================
 BRIDGE_NAME="br0"             # Nombre del puente
-PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración con IP fija
-
-# Configuración IP para el HOST (a través de br0)
-HOST_IP_BASE="192.168.0"       # Base de la IP
-HOST_IP_SUBNET="/24"           # Subnet Mask
+PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración
+HOST_IP_ADDRESS="192.168.0.40/24" # IP fija deseada para el host
 HOST_GATEWAY="192.168.0.1"     # Gateway para el host
 HOST_DNS="8.8.8.8,1.1.1.1,10.17.3.11"    # Servidores DNS para el host
 
@@ -25,39 +22,8 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-# Función para verificar si la IP ya está en uso
-check_ip_in_use() {
-  local ip=$1
-  ping -c 1 "$ip" &>/dev/null
-  return $?
-}
-
-# Función para obtener una IP libre en el rango 192.168.0.16-192.168.0.254
-get_free_ip() {
-  for ip in {16..254}; do
-    local test_ip="192.168.0.$ip"
-    if ! check_ip_in_use "$test_ip"; then
-      echo "$test_ip"
-      return 0
-    fi
-  done
-  echo "[-] No se pudo encontrar una IP libre en el rango especificado." >&2
-  exit 1
-}
-
-# =================== Configuración inicial ===================
-# Determina si la IP base está en uso
-HOST_IP_ADDRESS="192.168.0.15"
-
-echo "[+] Verificando si la IP $HOST_IP_ADDRESS ya está en uso..."
-check_ip_in_use "$HOST_IP_ADDRESS"
-if [[ $? -eq 0 ]]; then
-  echo "[!] La IP $HOST_IP_ADDRESS está en uso, se asignará una IP libre."
-  HOST_IP_ADDRESS=$(get_free_ip)
-  echo "[+] IP asignada: $HOST_IP_ADDRESS"
-fi
-
 # =================== Instalación y configuración ===================
+
 echo "[+] Instalando bridge-utils y NetworkManager (si faltan)..."
 dnf install -y bridge-utils NetworkManager -q || { echo "[-] Falló la instalación de paquetes. Abortando." >&2; exit 1; }
 
@@ -111,5 +77,4 @@ ip a show "$BRIDGE_NAME"
 echo "[+] Rutas actuales del host:"
 ip route show
 
-echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal con IP $HOST_IP_ADDRESS (o DHCP)."
-echo "[!] Si la IP $HOST_IP_ADDRESS ya estaba en uso en la red, podría haber un conflicto."
+echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal con IP $HOST_IP_ADDRESS."
