@@ -1,5 +1,5 @@
 #!/bin/bash
-# config-network-host.sh - Configura el puente de red y las interfaces físicas.
+# config-network-host.sh - Configura el puente de red y las interfaces físicas con DHCP y IP fija.
 # Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
 # Este script establece el puente `br0` con DHCP y asigna IP estática a una interfaz específica (`enp3s0f0`).
 
@@ -10,8 +10,8 @@ BRIDGE_NAME="br0"             # Nombre del puente
 PRIMARY_PHYS_IFACE="enp3s0f0" # Interfaz física para administración con IP fija
 
 # Configuración IP para el HOST (a través de br0)
-HOST_IP_METHOD="auto"         # "manual" para IP estática, "auto" para DHCP en br0
-HOST_IP_ADDRESS="192.168.0.40/24" # IP fija para la interfaz administrativa (enp3s0f0)
+HOST_IP_METHOD="manual"         # "manual" para IP estática, "auto" para DHCP en br0
+HOST_IP_ADDRESS="192.168.0.15/24" # IP fija para la interfaz administrativa (enp3s0f0)
 HOST_GATEWAY="192.168.0.1"    # Gateway para el host
 HOST_DNS="8.8.8.8,1.1.1.1,10.17.3.11"    # Servidores DNS para el host
 
@@ -43,21 +43,13 @@ for iface in "${OTHER_PHYS_IFACES[@]}"; do
   nmcli device modify "$iface" autoconnect no &>/dev/null || true
 done
 
-# =================== Crear y configurar el puente ===================
 echo "[+] Creando y configurando el puente $BRIDGE_NAME..."
-if [[ "$HOST_IP_METHOD" == "manual" ]]; then
-  nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" \
-    ipv4.method manual \
+nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" \
+    ipv4.method "$HOST_IP_METHOD" \
     ipv4.addresses "$HOST_IP_ADDRESS" \
     ipv4.gateway "$HOST_GATEWAY" \
     ipv4.dns "$HOST_DNS" \
     autoconnect yes
-else # DHCP
-  nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" \
-    ipv4.method auto \
-    ipv4.dns "$HOST_DNS" \
-    autoconnect yes
-fi
 
 echo "[+] Configurando $PRIMARY_PHYS_IFACE como esclava del puente $BRIDGE_NAME..."
 # Crear el perfil esclavo. El 'master' automáticamente levanta al esclavo.
@@ -81,4 +73,4 @@ echo "[+] Rutas actuales del host:"
 ip route show
 
 echo "[✔] Configuración de red del host completada. '$BRIDGE_NAME' es ahora la interfaz principal con IP $HOST_IP_ADDRESS (o DHCP)."
-echo "[!] Si la IP 192.168.0.40 ya estaba en uso en la red, podría haber un conflicto."
+echo "[!] Si la IP 192.168.0.15 ya estaba en uso en la red, podría haber un conflicto."
