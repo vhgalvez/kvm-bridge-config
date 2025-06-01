@@ -43,7 +43,6 @@ for iface in "${OTHER_PHYS_IFACES[@]}"; do
 done
 
 # =================== Configuración del Puente ===================
-
 echo "[+] Creando y configurando el puente $BRIDGE_NAME..."
 # Configuración del puente con DHCP
 nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" \
@@ -77,7 +76,6 @@ for iface in "${OTHER_PHYS_IFACES[@]}"; do
 done
 
 # =================== Verificación Final ===================
-
 echo "[+] Verificando estado final de las interfaces:"
 nmcli device status
 
