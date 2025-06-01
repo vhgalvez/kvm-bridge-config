@@ -102,3 +102,9 @@ resource "libvirt_domain" "vm" {
     bridge     = "br0"
     addresses  = [each.value.ip]
   }
+
+
+
+sudo chmod +x config-dhcp-interfaces.sh
+sudo ./config-dhcp-interfaces.sh
+
