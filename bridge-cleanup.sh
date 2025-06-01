@@ -24,13 +24,17 @@ echo "[+] Configurando las interfaces físicas para usar DHCP..."
 # Configuración de interfaces con DHCP
 for iface in "${INTERFACES[@]}"; do
   echo "[+] Configurando $iface para usar DHCP..."
-  
-  # Modificar la conexión existente para habilitar DHCP
+
+  # Eliminar la conexión actual si existe
   ACTIVE_CONN=$(nmcli -t -f NAME,DEVICE connection show | grep "$iface" | cut -d: -f1)
 
   if [[ -n "$ACTIVE_CONN" ]]; then
+    # Modificar la conexión existente para usar DHCP
+    echo "[+] Modificando la conexión existente $ACTIVE_CONN..."
     nmcli connection modify "$ACTIVE_CONN" ipv4.method auto ipv6.method ignore
   else
+    # Crear una nueva conexión para usar DHCP
+    echo "[+] Creando una nueva conexión para $iface..."
     nmcli connection add type ethernet con-name "$iface" ifname "$iface" ipv4.method auto ipv6.method ignore
   fi
 
