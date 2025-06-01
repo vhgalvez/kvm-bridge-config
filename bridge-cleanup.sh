@@ -1,5 +1,5 @@
 #!/bin/bash
-# config-network-host.sh - Configura un puente de red y cambia nombres de interfaces físicas con DHCP.
+# config-network-host.sh - Configura el puente de red y las interfaces físicas con DHCP y IP fija.
 # Compatible con Rocky Linux, AlmaLinux, RHEL 9+
 
 set -euo pipefail
