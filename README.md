@@ -1,53 +1,79 @@
 # 🔧 KVM Bridge Setup Scripts (DHCP) para Rocky/AlmaLinux
 
-Este repositorio contiene dos scripts automatizados para configurar y eliminar un bridge de red llamado `br0`, útil en entornos con KVM/libvirt cuando se requiere conectividad LAN directa para las máquinas virtuales (modo bridge).
+Este repositorio contiene tres scripts automatizados para configurar y eliminar un bridge de red llamado `br0`, útil en entornos con KVM/libvirt cuando se requiere conectividad LAN directa para las máquinas virtuales (modo bridge).
 
 ---
 
 ## 🖥️ Características
 
-* ✅ Crea un bridge persistente llamado `br0`.
-* ✅ Asigna IP mediante DHCP.
-* ✅ Añade una interfaz física como esclava (por defecto: `enp3s0f0`).
-* ✅ Compatible con `NetworkManager`.
-* ✅ Completamente reversible mediante script de limpieza.
+- ✅ Crea un bridge persistente llamado `br0` sin IP, permitiendo que las máquinas virtuales obtengan una IP.
+- ✅ Configura una interfaz física con IP fija (`192.168.0.40`).
+- ✅ Configura dos interfaces físicas con DHCP.
+- ✅ Compatible con NetworkManager.
+- ✅ Completamente reversible mediante el script de limpieza.
+- ✅ Ideal para entornos de pruebas y Kubernetes bare-metal.
 
 ---
 
 ## ⚙️ Requisitos
 
-* Rocky Linux / AlmaLinux / RHEL 9+.
-* Permisos de `sudo` o acceso root.
-* Una interfaz física disponible (verificable con `ip link`).
-* Red local con servidor DHCP activo.
+- **Sistema operativo:** Rocky Linux / AlmaLinux / RHEL 9+.
+- **Permisos:** Acceso como sudo o root.
+- **Hardware:** Una interfaz física disponible (verificable con `ip link`).
+- **Red:** Red local con servidor DHCP activo.
 
 ---
 
 ## 🚀 Ejecución rápida
 
-### 1. Clonar el repositorio
+### Paso 1: Clonar el repositorio
 
 ```bash
 git clone https://github.com/tu-usuario/kvm-bridge-config.git
 cd kvm-bridge-config
 ```
 
-### 2. Dar permisos de ejecución
+### Paso 2: Dar permisos de ejecución
 
 ```bash
-chmod +x bridge-setup.sh bridge-cleanup.sh
+chmod +x network-cleanup.sh network-setup-static-dhcp.sh network-setup-bridge.sh
 ```
 
-### 3. Ejecutar el script de configuración
+### Paso 3: Ejecutar los scripts en el siguiente orden
+
+#### 1. Limpiar configuraciones previas de red
+
+Este script eliminará todas las configuraciones de red previas.
 
 ```bash
-sudo ./bridge-setup.sh
+sudo bash network-cleanup.sh
 ```
 
-### 4. Para revertir la configuración
+#### 2. Configurar interfaces físicas con IP fija y DHCP
+
+Este script configurará:
+
+- Una interfaz (`enp3s0f0`) con IP fija `192.168.0.40/24`.
+- Dos interfaces (`enp3s0f1` y `enp4s0f0`) con DHCP.
 
 ```bash
-sudo ./bridge-cleanup.sh
+sudo bash network-setup-static-dhcp.sh
+```
+
+#### 3. Crear el puente `br0` sin IP
+
+Este script creará un puente `br0` sin IP y añadirá una interfaz física como esclava para permitir que las máquinas virtuales obtengan IPs automáticamente.
+
+```bash
+sudo bash network-setup-bridge.sh
+```
+
+### Paso 4: Revertir la configuración
+
+Si necesitas eliminar la configuración de red creada por los scripts, puedes ejecutar:
+
+```bash
+sudo bash network-cleanup.sh
 sudo systemctl restart NetworkManager
 ```
 
@@ -55,9 +81,12 @@ sudo systemctl restart NetworkManager
 
 ## 📍 Notas adicionales
 
-* Verifica tus interfaces con `ip link` o `nmcli device status`.
-* Puedes cambiar la interfaz física modificando la variable `PHYS_IFACE` en el script `bridge-setup.sh`.
-* Este tipo de bridge permite que tus VMs se comporten como si estuvieran directamente conectadas a la red física, ideal para pruebas de laboratorio, Kubernetes bare-metal, etc.
+- Verifica tus interfaces con `ip link` o `nmcli device status`.
+- Puedes cambiar la interfaz física modificando las variables en los scripts `network-setup-static-dhcp.sh` y `network-setup-bridge.sh`.
+- Este tipo de bridge permite que tus VMs se comporten como si estuvieran directamente conectadas a la red física, ideal para:
+  - Pruebas de laboratorio.
+  - Kubernetes bare-metal.
+  - Entornos de desarrollo.
 
 ---
 
@@ -65,54 +94,6 @@ sudo systemctl restart NetworkManager
 
 MIT — Libre para usar, modificar y distribuir.
 
+---
 
-
-sudo nmcli connection add type bridge con-name br0 ifname br0 autoconnect yes ipv4.method auto ipv6.method ignore
-sudo nmcli connection add type ethernet con-name br0-port-enp3s0f0 ifname enp3s0f0 master br0
-sudo nmcli connection up br0
-sudo nmcli connection up br0-port-enp3s0f0
-
-
-ip a show br0
-sudo brctl show br0
-nmcli connection show
-
-
-
-# Mostrar interfaces y sus IPs (asegurarse que br0 no tiene IP IPv4)
-ip a show br0
-
-# Mostrar interfaces esclavas del bridge
-sudo brctl show br0
-
-# (Opcional) Confirmar que NetworkManager tiene las conexiones activas
-nmcli connection show
-
-resource "libvirt_network" "br0" {
-  name      = var.so_network_name
-  mode      = "bridge"
-  bridge    = "br0"
-  autostart = true
-  addresses = ["192.168.0.0/24"]
-}
-
-
-
-resource "libvirt_domain" "vm" {
-  for_each = var.vm_linux_definitions
-
-  name   = each.value.hostname
-  memory = each.value.memory
-  vcpu   = each.value.cpus
-
-  network_interface {
-    #network_id = libvirt_network.br0.id
-    bridge     = "br0"
-    addresses  = [each.value.ip]
-  }
-
-
-
-sudo chmod +x config-dhcp-interfaces.sh
-sudo ./config-dhcp-interfaces.sh
-
+Este archivo README.md ahora incluye la información sobre los tres scripts, su orden de ejecución y cómo verificar su estado.
