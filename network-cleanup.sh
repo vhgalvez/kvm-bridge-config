@@ -6,9 +6,14 @@ set -euo pipefail
 
 echo "🧨 Eliminando todas las conexiones configuradas..."
 
-nmcli connection show | awk 'NR>1 {print $1}' | while read -r name; do
+# Obtener todas las conexiones activas y eliminarlas
+nmcli -t -f NAME connection show | while read -r name; do
   echo "❌ Eliminando conexión: $name"
   nmcli connection delete "$name" || true
 done
 
-echo "✅ Limpieza completada. Puedes reiniciar NetworkManager si deseas."
+# Reiniciar el NetworkManager
+echo "🔄 Reiniciando NetworkManager..."
+sudo systemctl restart NetworkManager
+
+echo "✅ Limpieza completada. Puedes verificar las conexiones con 'nmcli connection show'."
