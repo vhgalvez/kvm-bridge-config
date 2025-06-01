@@ -1,5 +1,5 @@
 #!/bin/bash
-# config-network-host.sh - Configura el puente de red `br0` con DHCP para recibir IP de la máquina virtual (MV)
+# config-network-host.sh - Configura el puente de red (br0) con DHCP para recibir IP de la máquina virtual (MV)
 # Compatible con Rocky Linux 9+, AlmaLinux 9+, RHEL 9+
 # Este script configura el puente `br0` para permitir que las máquinas virtuales obtengan su IP, mientras que el host mantiene el control de las interfaces físicas.
 
@@ -53,6 +53,10 @@ nmcli connection add type bridge con-name "$BRIDGE_NAME" ifname "$BRIDGE_NAME" \
 # Activar el puente para obtener la IP por DHCP
 echo "[+] Activando el puente $BRIDGE_NAME para obtener IP por DHCP..."
 nmcli connection up "$BRIDGE_NAME" || { echo "[-] Falló la activación del puente $BRIDGE_NAME. Abortando." >&2; exit 1; }
+
+# =================== Esperar a que el puente obtenga una IP ===================
+echo "[+] Esperando que el puente obtenga una IP por DHCP..."
+sleep 10  # Esperamos 10 segundos para que el puente reciba su IP
 
 # =================== Configuración de la interfaz con IP fija ===================
 echo "[+] Configurando $PRIMARY_PHYS_IFACE para actuar como esclavo del puente $BRIDGE_NAME..."
