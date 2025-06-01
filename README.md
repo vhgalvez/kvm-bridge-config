@@ -35,8 +35,10 @@ cd kvm-bridge-config
 
 ### Paso 2: Dar permisos de ejecución
 
+Antes de ejecutar los scripts, asegúrate de otorgarles permisos de ejecución:
+
 ```bash
-chmod +x network-cleanup.sh network-setup-static-dhcp.sh network-setup-bridge.sh
+sudo chmod +x network-cleanup.sh network-setup-static-dhcp.sh network-setup-bridge.sh
 ```
 
 ### Paso 3: Ejecutar los scripts en el siguiente orden
@@ -96,4 +98,4 @@ MIT — Libre para usar, modificar y distribuir.
 
 ---
 
-Este archivo README.md ahora incluye la información sobre los tres scripts, su orden de ejecución y cómo verificar su estado.
+Este archivo README.md ahora incluye la información sobre los tres scripts, su orden de ejecución, cómo otorgar permisos de ejecución y cómo verificar su estado.
