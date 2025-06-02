@@ -157,10 +157,8 @@ MIT. Puedes modificar y reutilizar libremente.
 ## ✍️ Autor
 
 **Víctor Hugo Gálvez Sastoque**  
-Ingeniero en Sistemas con más de 24 años de experiencia en la industria tecnológica en América Latina y Europa.  
-Especialista en administración de sistemas, DevOps y automatización de infraestructura.  
-Apasionado por liderar proyectos de transformación digital con impacto real.
+Ingeniero de Sistemas con más de 20 años de experiencia en infraestructura, DevOps y automatización.  
+Orientado a la dirección tecnológica con visión de CTO/CEO en entornos de alto impacto.
 
-🎓 **Formación:** [Ingeniero de Sistemas – Universidad Antonio Nariño](https://www.uan.edu.co/) – Bogotá, Colombia  
 🌐 **GitHub:** [@vhgalvez](https://github.com/vhgalvez)  
 💼 **LinkedIn:** [victor-hugo-galvez-sastoque](https://www.linkedin.com/in/victor-hugo-galvez-sastoque/)
