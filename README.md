@@ -160,4 +160,4 @@ MIT. Puedes modificar y reutilizar libremente.
 Especialista en DevOps, Infraestructura, Automatización y Kubernetes
 
 - 🌐 **GitHub:** [@vhgalvez](https://github.com/vhgalvez)  
-- 💼 **LinkedIn:** [vhgalvez](https://www.linkedin.com/in/vhgalvez/)
+- 💼 **LinkedIn:** [victor-hugo-galvez-sastoque/](https://www.linkedin.com/in/victor-hugo-galvez-sastoque/)
