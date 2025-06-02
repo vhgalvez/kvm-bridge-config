@@ -157,7 +157,10 @@ MIT. Puedes modificar y reutilizar libremente.
 ## ✍️ Autor
 
 **Víctor Hugo Gálvez Sastoque**  
-Especialista en DevOps, Infraestructura, Automatización y Kubernetes
+Ingeniero en Sistemas con más de 24 años de experiencia en la industria tecnológica en América Latina y Europa.  
+Especialista en administración de sistemas, DevOps y automatización de infraestructura.  
+Apasionado por liderar proyectos de transformación digital con impacto real.
 
-- 🌐 **GitHub:** [@vhgalvez](https://github.com/vhgalvez)  
-- 💼 **LinkedIn:** [victor-hugo-galvez-sastoque/](https://www.linkedin.com/in/victor-hugo-galvez-sastoque/)
+🎓 **Formación:** [Ingeniero de Sistemas – Universidad Antonio Nariño](https://www.uan.edu.co/) – Bogotá, Colombia  
+🌐 **GitHub:** [@vhgalvez](https://github.com/vhgalvez)  
+💼 **LinkedIn:** [victor-hugo-galvez-sastoque](https://www.linkedin.com/in/victor-hugo-galvez-sastoque/)
