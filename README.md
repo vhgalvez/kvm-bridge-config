@@ -1,114 +1,88 @@
-# 🔧 KVM Bridge Setup Scripts (DHCP) para Rocky/AlmaLinux
+# 🖧 Configuración de Red - Virtualización Server
 
-Este repositorio contiene tres scripts automatizados para configurar y eliminar un bridge de red llamado `br0`, útil en entornos con KVM/libvirt cuando se requiere conectividad LAN directa para las máquinas virtuales (modo bridge).
+Este proyecto contiene scripts automatizados para configurar la red de un servidor de virtualización con 4 interfaces físicas, ideal para laboratorios KVM/libvirt.
 
 ---
 
-## 🖥️ Características
+## 🧭 Diseño de Red
 
-- ✅ Crea un bridge persistente llamado `br0` sin IP, permitiendo que las máquinas virtuales obtengan una IP.
-- ✅ Configura una interfaz física con IP fija (`192.168.0.40`).
-- ✅ Configura dos interfaces físicas con DHCP.
-- ✅ Compatible con NetworkManager.
-- ✅ Completamente reversible mediante el script de limpieza.
-- ✅ Ideal para entornos de pruebas y Kubernetes bare-metal.
+| Interfaz     | IP del Host       | Función                  | Gateway | Observaciones |
+|--------------|-------------------|--------------------------|---------|----------------|
+| enp3s0f0     | 192.168.0.40/24   | Acceso LAN / Internet    | ✅      | Única interfaz con gateway |
+| enp3s0f1     | 192.168.50.1/24   | Red de Gestión Privada   | ❌      | Aislada, sin puerta de enlace |
+| enp4s0f0     | 192.168.60.1/24   | Red de Pruebas / WiFi    | ❌      | Aislada, sin puerta de enlace |
+| enp4s0f1     | (sin IP)          | Esclava de br0 (bridge)  | ❌      | Conectada al bridge `br0` |
+
+---
+
+## 📂 Archivos Incluidos
+
+| Archivo                        | Descripción |
+|-------------------------------|-------------|
+| `setup-admin-interface.sh`    | Configura `enp3s0f0` con IP fija y gateway. |
+| `setup-management-network.sh` | Configura `enp3s0f1` como red de gestión sin gateway. |
+| `setup-test-network.sh`       | Configura `enp4s0f0` como red de pruebas sin gateway. |
+| `setup-bridge-br0.sh`         | Crea el `bridge br0` y añade `enp4s0f1` como esclava. |
+| `finalize-network.sh`         | Reinicia NetworkManager, recarga nftables y muestra rutas. |
 
 ---
 
 ## ⚙️ Requisitos
 
-- **Sistema operativo:** Rocky Linux / AlmaLinux / RHEL 9+.
-- **Permisos:** Acceso como sudo o root.
-- **Hardware:** Una interfaz física disponible (verificable con `ip link`).
-- **Red:** Red local con servidor DHCP activo.
+- Rocky Linux 9 / AlmaLinux 9 / RHEL 9+
+- NetworkManager instalado y activo
+- `nmcli` disponible
+- Privilegios `sudo` para aplicar configuraciones
+- Reglas de firewall ubicadas en `/etc/sysconfig/nftables.conf` (opcional)
 
 ---
 
-## 🚀 Ejecución rápida
+## 🚀 Instrucciones de Ejecución
 
-### Paso 1: Clonar el repositorio
+1. **Dar permisos de ejecución a los scripts:**
 
-```bash
-git clone https://github.com/tu-usuario/kvm-bridge-config.git
-cd kvm-bridge-config
-```
+    ```bash
+    chmod +x setup-*.sh finalize-network.sh
+    ```
 
-### Paso 2: Dar permisos de ejecución
+2. **Asegúrate de que no hay configuraciones activas previas que puedan interferir.**
 
-Antes de ejecutar los scripts, asegúrate de otorgarles permisos de ejecución:
+3. **Ejecuta los scripts en el siguiente orden:**
 
-```bash
-sudo chmod +x network-cleanup.sh network-setup-static-dhcp.sh network-setup-bridge.sh
-```
+    ```bash
+    sudo bash setup-admin-interface.sh
+    sudo bash setup-management-network.sh
+    sudo bash setup-test-network.sh
+    sudo bash setup-bridge-br0.sh
+    sudo bash finalize-network.sh
+    ```
 
-### Paso 3: Ejecutar los scripts en el siguiente orden
+4. **Verifica la red:**
 
-#### 1. Limpiar configuraciones previas de red
-
-Este script eliminará todas las configuraciones de red previas.
-
-```bash
-sudo bash network-cleanup.sh
-```
-
-#### 2. Configurar interfaces físicas con IP fija y DHCP
-
-Este script configurará:
-
-- Una interfaz (`enp3s0f0`) con IP fija `192.168.0.40/24`.
-- Dos interfaces (`enp3s0f1` y `enp4s0f0`) con DHCP.
-
-```bash
-sudo bash network-setup-static-dhcp.sh
-```
-
-#### 3. Crear el puente `br0` sin IP
-
-Este script creará un puente `br0` sin IP y añadirá una interfaz física como esclava para permitir que las máquinas virtuales obtengan IPs automáticamente.
-
-```bash
-sudo bash network-setup-bridge.sh
-```
-
-### Paso 4: Revertir la configuración
-
-Si necesitas eliminar la configuración de red creada por los scripts, puedes ejecutar:
-
-```bash
-sudo bash network-cleanup.sh
-sudo systemctl restart NetworkManager
-```
+    ```bash
+    ip a
+    ip route
+    nmcli con show
+    ```
 
 ---
 
-## 📍 Notas adicionales
+## 🔐 Seguridad
 
-- Verifica tus interfaces con `ip link` o `nmcli device status`.
-- Puedes cambiar la interfaz física modificando las variables en los scripts `network-setup-static-dhcp.sh` y `network-setup-bridge.sh`.
-- Este tipo de bridge permite que tus VMs se comporten como si estuvieran directamente conectadas a la red física, ideal para:
-  - Pruebas de laboratorio.
-  - Kubernetes bare-metal.
-  - Entornos de desarrollo.
+- La red de gestión (`192.168.50.0/24`) está aislada para acceso seguro (SSH).
+- No se definen rutas por defecto en ninguna interfaz excepto `enp3s0f0`, evitando conflictos de enrutamiento.
+- Se recomienda configurar reglas de `nftables` para NAT y reenvío de tráfico si usas KVM/libvirt con NAT.
 
 ---
 
-## 📜 Licencia
+## 📄 Licencia
 
-MIT — Libre para usar, modificar y distribuir.
+MIT. Puedes modificar y reutilizar libremente.
 
 ---
 
-Este archivo README.md ahora incluye la información sobre los tres scripts, su orden de ejecución, cómo otorgar permisos de ejecución y cómo verificar su estado.
+## ✍️ Autor
 
-
-
-
-# 📁 Estructura Propuesta de Archivos
-
-Script	Nombre del archivo	Descripción
-1️⃣	network-cleanup.sh	Elimina todas las conexiones existentes en NetworkManager. Punto de partida para evitar conflictos.
-2️⃣	setup-admin-interface.sh	Configura enp3s0f0 con IP fija 192.168.0.40/24 y gateway 192.168.0.1. Proporciona acceso LAN e Internet.
-3️⃣	setup-bridge-br0.sh	Crea el bridge br0 con enp4s0f1 como esclava. No tiene IP propia. Usado para conectar VMs a LAN.
-4️⃣	setup-management-network.sh	Configura enp3s0f1 como red de gestión (192.168.50.1/24) sin gateway. Aislada y segura para SSH u otras tareas administrativas.
-5️⃣	setup-test-network.sh	Configura enp4s0f0 como red de pruebas (192.168.60.1/24) sin gateway. Ideal para conectar routers o redes de laboratorio.
-6️⃣	finalize-network.sh	Reinicia NetworkManager y aplica reglas de nftables. También muestra la tabla de rutas para verificación.
+Víctor Hugo Gálvez Sastoque  
+DevOps | Infraestructura | Automatización | Kubernetes  
+GitHub: [vhgalvez](https://github.com/vhgalvez)
