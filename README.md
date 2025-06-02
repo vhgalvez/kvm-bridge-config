@@ -99,3 +99,4 @@ MIT — Libre para usar, modificar y distribuir.
 ---
 
 Este archivo README.md ahora incluye la información sobre los tres scripts, su orden de ejecución, cómo otorgar permisos de ejecución y cómo verificar su estado.
+
