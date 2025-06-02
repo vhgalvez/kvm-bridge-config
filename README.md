@@ -156,6 +156,18 @@ Reservada exclusivamente para tareas administrativas y de monitorización del se
   - Control de acceso.
   - Aplicar NAT para acceso a Internet de VMs.
 
+## ✅ Estado Actual del Host `virtualizacion-server`
+
+| Interfaz   | IP asignada       | Función esperada                       | Estado | Observaciones                                                                 |
+|------------|-------------------|----------------------------------------|--------|--------------------------------------------------------------------------------|
+| `enp3s0f0` | `192.168.0.40`    | Salida a Internet (LAN principal)      | ✅ UP  | Correcta. Es la única con gateway. No se usa para gestión.                    |
+| `enp3s0f1` | `192.168.50.1`    | Red de Gestión Privada                 | ✅ UP  | Correcta. IP estática, sin gateway. Ideal para acceso SSH.                   |
+| `enp4s0f0` | `192.168.60.1`    | Red de Pruebas / WiFi                  | ✅ UP  | Correcta. IP estática, sin gateway. Funciona para conectar router Wi-Fi.     |
+| `enp4s0f1` | *(sin IP)*        | Esclava del bridge `br0` (para VMs)    | ✅ UP  | Correcto. Forma parte del bridge `br0`, no debe tener IP.                    |
+| `br0`      | *(sin IP IPv4)*   | Puente de red para VMs                 | ✅ UP  | OK. Podrías asignarle IP si necesitas acceder al host desde la LAN (opcional). |
+| `lo`       | `127.0.0.1`       | Loopback                               | ✅ UP  | Normal.                                                                       |
+
+
 ---
 
 ## 📄 Licencia
