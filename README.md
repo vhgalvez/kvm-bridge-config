@@ -8,10 +8,10 @@ Este proyecto contiene scripts automatizados para configurar la red de un servid
 
 | Interfaz | IP del Host     | Función                 | Gateway | Observaciones                 |
 | -------- | --------------- | ----------------------- | ------- | ----------------------------- |
-| enp3s0f0 | 192.168.0.40/24 | Acceso LAN / Internet   | ✅       | Única interfaz con gateway    |
-| enp3s0f1 | 192.168.50.1/24 | Red de Gestión Privada  | ❌       | Aislada, sin puerta de enlace |
-| enp4s0f0 | 192.168.60.1/24 | Red de Pruebas / WiFi   | ❌       | Aislada, sin puerta de enlace |
-| enp4s0f1 | (sin IP)        | Esclava de br0 (bridge) | ❌       | Conectada al bridge `br0`     |
+| enp3s0f0 | 192.168.0.40/24 | Acceso LAN / Internet   | ✅      | Única interfaz con gateway    |
+| enp3s0f1 | 192.168.50.1/24 | Red de Gestión Privada  | ❌      | Aislada, sin puerta de enlace |
+| enp4s0f0 | 192.168.60.1/24 | Red de Pruebas / WiFi   | ❌      | Aislada, sin puerta de enlace |
+| enp4s0f1 | (sin IP)        | Esclava de br0 (bridge) | ❌      | Conectada al bridge `br0`     |
 
 ---
 
@@ -24,16 +24,17 @@ Este proyecto contiene scripts automatizados para configurar la red de un servid
 | `setup-test-network.sh`       | Configura `enp4s0f0` como red de pruebas sin gateway.      |
 | `setup-bridge-br0.sh`         | Crea el `bridge br0` y añade `enp4s0f1` como esclava.      |
 | `finalize-network.sh`         | Reinicia NetworkManager, recarga nftables y muestra rutas. |
+| `network-cleanup.sh`          | Limpia configuraciones previas de red.                     |
 
 ---
 
 ## ⚙️ Requisitos
 
-* Rocky Linux 9 / AlmaLinux 9 / RHEL 9+
-* NetworkManager instalado y activo
-* `nmcli` disponible
-* Privilegios `sudo` para aplicar configuraciones
-* Reglas de firewall ubicadas en `/etc/sysconfig/nftables.conf` (opcional)
+- Rocky Linux 9 / AlmaLinux 9 / RHEL 9+
+- NetworkManager instalado y activo
+- `nmcli` disponible
+- Privilegios `sudo` para aplicar configuraciones
+- Reglas de firewall ubicadas en `/etc/sysconfig/nftables.conf` (opcional)
 
 ---
 
@@ -49,15 +50,24 @@ Este proyecto contiene scripts automatizados para configurar la red de un servid
 
 3. **Ejecuta los scripts en el siguiente orden:**
 
-   ```bash
-   sudo bash setup-admin-interface.sh
-   sudo bash setup-management-network.sh
-   sudo bash setup-test-network.sh
-   sudo bash setup-bridge-br0.sh
-   sudo bash finalize-network.sh
-   ```
 
-4. **Verifica la red:**
+- **limpiar configuraciones previas de red:**
+
+```bash
+sudo bash network-cleanup.sh
+```
+
+- **configurar las interfaces de red:**
+
+```bash
+sudo bash setup-admin-interface.sh
+sudo bash setup-management-network.sh
+sudo bash setup-test-network.sh
+sudo bash setup-bridge-br0.sh
+sudo bash finalize-network.sh
+```
+
+1. **Verifica la red:**
 
    ```bash
    ip a
@@ -78,19 +88,19 @@ Conectas físicamente tu PC a la red de gestión, ya sea directamente al puerto 
 
 **Configuración de red en tu PC (Windows/Linux):**
 
-* **IP:** `192.168.50.10`
-* **Máscara de subred:** `255.255.255.0`
-* **Gateway:** *(dejar vacío)*
+- **IP:** `192.168.50.10`
+- **Máscara de subred:** `255.255.255.0`
+- **Gateway:** _(dejar vacío)_
 
 **Ventajas:**
 
-* Aislamiento total entre redes.
-* Seguridad reforzada: solo accede quien tenga conexión física.
+- Aislamiento total entre redes.
+- Seguridad reforzada: solo accede quien tenga conexión física.
 
 **Desventajas:**
 
-* Requiere cambiar cableado o configuración IP manualmente.
-* Menos cómodo para uso frecuente o automatizado.
+- Requiere cambiar cableado o configuración IP manualmente.
+- Menos cómodo para uso frecuente o automatizado.
 
 ### ⚙️ Opcion 2: Ruta Estática desde la Red Principal (Mayor Comodidad)
 
@@ -107,13 +117,13 @@ route ADD 192.168.50.0 MASK 255.255.255.0 192.168.0.40 METRIC 1 -p
 
 **Ventajas:**
 
-* Acceso directo desde tu red habitual.
-* No necesitas reconectar cables ni cambiar configuración IP.
+- Acceso directo desde tu red habitual.
+- No necesitas reconectar cables ni cambiar configuración IP.
 
 **Desventajas:**
 
-* Rompe el aislamiento total entre redes.
-* Otros dispositivos en la LAN podrían intentar acceder si conocen la ruta.
+- Rompe el aislamiento total entre redes.
+- Otros dispositivos en la LAN podrían intentar acceder si conocen la ruta.
 
 ---
 
@@ -121,30 +131,30 @@ route ADD 192.168.50.0 MASK 255.255.255.0 192.168.0.40 METRIC 1 -p
 
 Reservada exclusivamente para tareas administrativas y de monitorización del servidor, como:
 
-* ✅ Acceso SSH seguro al host (`192.168.50.1`).
-* ✅ Interfaces web administrativas (ej. Cockpit).
-* ✅ Transferencia de archivos (scp, sftp, WinSCP).
-* ✅ Recolección de métricas con Prometheus, Node Exporter, etc.
+- ✅ Acceso SSH seguro al host (`192.168.50.1`).
+- ✅ Interfaces web administrativas (ej. Cockpit).
+- ✅ Transferencia de archivos (scp, sftp, WinSCP).
+- ✅ Recolección de métricas con Prometheus, Node Exporter, etc.
 
 ---
 
 ## 📌 Recomendación de Uso
 
-| Entorno              | Opcion Recomendada                              |
-| -------------------- | ----------------------------------------------- |
+| Entorno              | Opcion Recomendada                             |
+| -------------------- | ---------------------------------------------- |
 | Producción / Crítico | 🛡️ Opcion 1 (Conexión Física - Alta Seguridad) |
-| Laboratorio / Dev    | ⚙️ Opcion 2 (Ruta Estática - Mayor Comodidad)   |
+| Laboratorio / Dev    | ⚙️ Opcion 2 (Ruta Estática - Mayor Comodidad)  |
 
 ---
 
 ## 🔒 Seguridad General
 
-* Solo `enp3s0f0` tiene salida a Internet mediante gateway (`192.168.0.1`).
-* Las otras interfaces están aisladas sin gateway para evitar fugas de tráfico.
-* Se recomienda configurar reglas de `nftables` para:
+- Solo `enp3s0f0` tiene salida a Internet mediante gateway (`192.168.0.1`).
+- Las otras interfaces están aisladas sin gateway para evitar fugas de tráfico.
+- Se recomienda configurar reglas de `nftables` para:
 
-  * Control de acceso.
-  * Aplicar NAT para acceso a Internet de VMs.
+  - Control de acceso.
+  - Aplicar NAT para acceso a Internet de VMs.
 
 ---
 
