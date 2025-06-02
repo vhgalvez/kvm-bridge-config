@@ -100,3 +100,15 @@ MIT — Libre para usar, modificar y distribuir.
 
 Este archivo README.md ahora incluye la información sobre los tres scripts, su orden de ejecución, cómo otorgar permisos de ejecución y cómo verificar su estado.
 
+
+
+
+# 📁 Estructura Propuesta de Archivos
+
+Script	Nombre del archivo	Descripción
+1️⃣	network-cleanup.sh	Elimina todas las conexiones existentes en NetworkManager. Punto de partida para evitar conflictos.
+2️⃣	setup-admin-interface.sh	Configura enp3s0f0 con IP fija 192.168.0.40/24 y gateway 192.168.0.1. Proporciona acceso LAN e Internet.
+3️⃣	setup-bridge-br0.sh	Crea el bridge br0 con enp4s0f1 como esclava. No tiene IP propia. Usado para conectar VMs a LAN.
+4️⃣	setup-management-network.sh	Configura enp3s0f1 como red de gestión (192.168.50.1/24) sin gateway. Aislada y segura para SSH u otras tareas administrativas.
+5️⃣	setup-test-network.sh	Configura enp4s0f0 como red de pruebas (192.168.60.1/24) sin gateway. Ideal para conectar routers o redes de laboratorio.
+6️⃣	finalize-network.sh	Reinicia NetworkManager y aplica reglas de nftables. También muestra la tabla de rutas para verificación.
