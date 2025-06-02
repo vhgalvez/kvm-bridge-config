@@ -156,7 +156,8 @@ MIT. Puedes modificar y reutilizar libremente.
 
 ## ✍️ Autor
 
-**Víctor Hugo Gálvez Sastoque**
-DevOps | Infraestructura | Automatización | Kubernetes
-GitHub: [vhgalvez](https://github.com/vhgalvez)
-LinkedIn: [vhgalvez](https://www.linkedin.com/in/vhgalvez/)
+**Víctor Hugo Gálvez Sastoque**  
+Especialista en DevOps, Infraestructura, Automatización y Kubernetes
+
+- 🌐 **GitHub:** [@vhgalvez](https://github.com/vhgalvez)  
+- 💼 **LinkedIn:** [vhgalvez](https://www.linkedin.com/in/vhgalvez/)
