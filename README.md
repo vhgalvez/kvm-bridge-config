@@ -64,6 +64,7 @@ sudo bash setup-admin-interface.sh
 sudo bash setup-management-network.sh
 sudo bash setup-test-network.sh
 sudo bash setup-bridge-br0.sh
+sudo bash setup_br_vip.sh
 sudo bash finalize-network.sh
 ```
 
